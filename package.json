@@ -12,7 +12,7 @@
     "node": ">=0.6.1"
   },
   "dependencies": {
-    "dropbox-node": "*",
+    "dropbox": "*",
     "sugar": "*",
     "redis": "*"
   }
