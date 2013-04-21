@@ -1,0 +1,19 @@
+{
+  "author": "Termina1",
+  "name": "raspberry-watcher",
+  "description": "Watching dropbox dir",
+  "version": "0.0.1",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com:Termina1/raspberry-watcher.git"
+  },
+  "main": "index.js",
+  "engines": {
+    "node": ">=0.6.1"
+  },
+  "dependencies": {
+    "dropbox-node": "*",
+    "sugar": "*",
+    "redis": "*"
+  }
+}
