@@ -1,15 +1,18 @@
 dropbox = require('dropbox');
 fs = require('fs');
 require('sugar');
+path = require('path');
 
 RKEY = 'raspberry:torrent';
+RTOKEN = 'raspberry:credentials'
 
 var redis = require("redis"), rclient = redis.createClient();
 
 var KEY = '7hm2dro53iytw7o';
 var TOKEN = '5mbjd3ahl04i2n2';
+var wacthDir = '';
+var writeDir = '';
 
-var client = new dropbox.Client({ key: KEY, secret: TOKEN });
 var simpleDriver = {
   url: function() { return ""; },
   doAuthorize: function(authUrl, token, tokenSecret, callback) {
@@ -24,16 +27,28 @@ var simpleDriver = {
   }
 };
 
-client.authDriver(simpleDriver);
-
-client.authenticate(function(error, client) {
-  setInterval(function() {
-    processLoop(client);
-  }, 1000);
-});
+module.exports = function(watch, write) {
+  wacthDir =  watch;
+  writeDir = write;
+  rclient.get(RTOKEN, function(err, data) {
+    var client;
+    if(data) {
+      data = JSON.parse(data);
+      client = new dropbox.Client({ key: KEY, secret: TOKEN, token: data.token, tokenSecret: data.tokenSecret });
+      processLoop(client);
+    } else {
+      client = new dropbox.Client({ key: KEY, secret: TOKEN });
+      client.authDriver(simpleDriver);
+      client.authenticate(function(error, client) {
+        rclient.set(RTOKEN, JSON.stringify(client.oauth));
+        processLoop(client);
+      });
+    }
+  });
+}
 
 function processLoop(client) {
-  rclient.get('raspberry:torrent', function(err, data) {
+  rclient.get(RKEY, function(err, data) {
     var prev;
     if(!err && data) {
       prev = JSON.parse(data);
@@ -43,22 +58,24 @@ function processLoop(client) {
       prev = [];
     }
 
-    client.readdir('Apps/torrents', function(err, data) {
+    client.readdir(wacthDir, function(err, data) {
       var newdata = data.sort();
       var diff = newdata.subtract(prev);
+      diff = diff.filter(function(el) { return el.match(/\.torrent$/); });
       for(var i = 0; i < diff.length; i++) {
         dumpFile(diff[i], client);
       }
       rclient.set(RKEY, JSON.stringify(newdata));
+      setTimeout(function() { processLoop(client); }, 1000);
     });
   });
 }
 
 function dumpFile(file, client) {
   console.log('downloading ' + file + '\n');
-  client.readFile("Apps/torrents/" + file, function(err, data) {
+  client.readFile(path.join(wacthDir, file), function(err, data) {
     if(!err) {
-      fs.writeFile(file, data);
+      fs.writeFile(path.join(writeDir, file), data);
     }
   });
 }
