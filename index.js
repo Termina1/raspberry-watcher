@@ -73,7 +73,7 @@ function processLoop(client) {
 
 function dumpFile(file, client) {
   console.log('downloading ' + file + '\n');
-  client.readFile(path.join(wacthDir, file), function(err, data) {
+  client.readFile(path.join(wacthDir, file), { buffer: true }, function(err, data) {
     if(!err) {
       fs.writeFile(path.join(writeDir, file), data);
     }
