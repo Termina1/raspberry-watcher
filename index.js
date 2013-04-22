@@ -59,13 +59,15 @@ function processLoop(client) {
     }
 
     client.readdir(wacthDir, function(err, data) {
-      var newdata = data.sort();
-      var diff = newdata.subtract(prev);
-      diff = diff.filter(function(el) { return el.match(/\.torrent$/); });
-      for(var i = 0; i < diff.length; i++) {
-        dumpFile(diff[i], client);
+      if(!err) {
+        var newdata = data.sort();
+        var diff = newdata.subtract(prev);
+        diff = diff.filter(function(el) { return el.match(/\.torrent$/); });
+        for(var i = 0; i < diff.length; i++) {
+          dumpFile(diff[i], client);
+        }
+        rclient.set(RKEY, JSON.stringify(newdata));
       }
-      rclient.set(RKEY, JSON.stringify(newdata));
       setTimeout(function() { processLoop(client); }, 1000);
     });
   });
